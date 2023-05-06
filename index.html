@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality System Starter</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <h1>Please keep this website open while monitoring Air Quality</h1>
+
+    <div>
+        <h3>Location of Sensor: </h3>
+        <p>Longitude: <span id="longitude"></span></p>
+        <p>Latitude: <span id="latitude"></span></p>
+    </div>
+
+    <p style="color: red;" id="error"></p>
+    <script>
+        const errorBox = document.getElementById("error");
+        const lot = document.getElementById("longitude")
+        const lt = document.getElementById("latitude");
+        const sendData = async (l1, l2) => {
+            try {
+                const res = await axios.post("/api/sendData", {
+                    longitude: l1,
+                    latitude: l2
+                });
+
+                if(res.data.code !== 200) {
+                    errorBox.innerHTML = res.data.msg;
+                }
+            } catch (error) {
+                errorBox.innerHTML = error.message;
+            }
+        }
+        function success(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            lot.innerHTML = longitude;
+            lt.innerHTML = latitude;
+            errorBox.innerHTML = "";
+            sendData(longitude, latitude);
+            // status.textContent = "";
+            // mapLink.href = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
+            // mapLink.textContent = `Latitude: ${latitude} °, Longitude: ${longitude} °`;
+        }
+
+        function error(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorBox.innerHTML = "User denied the request for Geolocation."
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorBox.innerHTML = "Location information is unavailable."
+                    break;
+                case error.TIMEOUT:
+                    errorBox.innerHTML = "The request to get user location timed out."
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorBox.innerHTML = "An unknown error occurred."
+                    break;
+            }
+        }
+
+        if (!navigator.geolocation) {
+            // status.textContent = "Geolocation is not supported by your browser";
+            alert("Geolocation not supported by your browser");
+        } else {
+            // status.textContent = "Locating…";
+            setInterval(() => {
+                navigator.geolocation.getCurrentPosition(success, error);
+            }, 5000)
+        }
+    </script>
+</body>
+
+</html>
