@@ -109,7 +109,7 @@ app.get("/api/getLatestVal", async (req, res) => {
     try {
         const db = client.db("airQualitySystem")
         const collection = db.collection("parameters")
-        const cursor = collection.find().sort({ timestamp: -1 }).limit(1);
+        const cursor = collection.find().sort({ _id: -1 }).limit(1);
         let finalDoc = [];
 
         for await (const doc of cursor) {
