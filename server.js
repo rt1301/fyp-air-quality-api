@@ -4,7 +4,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const axios = require("axios");
 const path = require("path");
-const PORT = process.env.PORT || 3030;
+const PORT = process.env.PORT || 5000;
 
 const { MongoClient } = require("mongodb");
 
@@ -53,6 +53,79 @@ app.get("/", (req, res) => {
     res.sendFile('./index.html', { root: __dirname })
 })
 
+app.get("/api/listAll", async (req, res) => {
+    try {
+        const db = client.db("airQualitySystem")
+        const collection = db.collection("parameters")
+        const data = await collection.find({});
+        let finalData = [];
+        for await (const doc of data) {
+            finalData.push(doc);
+        }
+        return res.json({
+            code:200,
+            data: finalData
+        });
+    } catch (error) {
+        return res.json({
+            code: 400,
+            error: error.message
+        })
+    }
+})
+
+app.post("/api/getDataRange", async (req, res) => {
+    const { start, end } = req.body;
+    try {
+        const db = client.db("airQualitySystem")
+        const collection = db.collection("parameters")
+        const cursor = await collection.find({
+            timestamp: {
+                $gte: new Date(start),
+                $lt: new Date(end),
+            }
+        })
+        let finalData = [];
+        for await (const doc of cursor) {
+            finalData.push(doc);
+        }
+        return res.json({
+            code: 200,
+            data: finalData
+        });
+
+    } catch (error) {
+        return res.json({
+            code: 400,
+            error: error.message
+        })
+    }
+})
+
+app.get("/api/getLatestVal", async (req, res) => {
+    try {
+        const db = client.db("airQualitySystem")
+        const collection = db.collection("parameters")
+        const cursor = collection.find().sort({ timestamp: -1 }).limit(1);
+        let finalDoc = [];
+
+        for await (const doc of cursor) {
+            finalDoc.push(doc);
+        }
+
+        return res.json({
+            code: 200,
+            data: finalDoc
+        });
+
+    } catch (error) {
+        return res.json({
+            code: 400,
+            error: error.message
+        })
+    }
+})
+
 app.post("/api/sendData", async (req, res) => {
     try {
         const gas = await fetchGasValue();
@@ -73,7 +146,6 @@ app.post("/api/sendData", async (req, res) => {
         const data = await collection.insertOne(doc);
 
         if (data.acknowledged) {
-            console.log(`Data inserted: ${data.insertedId}`);
             return res.json({
                 code: 200,
                 id: data.insertedId,
@@ -95,5 +167,5 @@ app.post("/api/sendData", async (req, res) => {
 })
 
 app.listen(PORT, () => {
-    console.log("Server is running on port 5000");
+    console.log("Server is running on port " + PORT);
 })
